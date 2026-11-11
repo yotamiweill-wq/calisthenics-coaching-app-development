@@ -23,6 +23,7 @@ export default async function TraineeProfilePage({ params }: { params: Promise<{
     .select('id, full_name, email, role')
     .eq('id', id)
     .eq('role', 'trainee')
+    .is('removed_at', null)
     .maybeSingle()
   if (!trainee) notFound()
 

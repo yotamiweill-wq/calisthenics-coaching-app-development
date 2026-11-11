@@ -15,6 +15,7 @@ export default async function CoachPage() {
       .from('profiles')
       .select('id, email, full_name, role, disabled_at')
       .eq('role', 'trainee')
+      .is('removed_at', null)
       .order('full_name', { ascending: true }),
     supabase
       .from('submissions')

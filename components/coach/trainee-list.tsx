@@ -7,6 +7,7 @@ import { SearchIcon, UsersIcon } from 'lucide-react'
 import { exerciseLabel, formatShortDate, type CoachSubmission, type Profile } from '@/lib/calisthenics'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { TraineeActionsMenu } from '@/components/coach/trainee-actions-menu'
 
 export function TraineeList({
   trainees,
@@ -107,12 +108,15 @@ export function TraineeList({
                   </span>
                 </span>
               </button>
-              <Link
-                href={`/coach/trainees/${trainee.id}`}
-                className="mt-1.5 flex h-10 items-center justify-center rounded-xl bg-secondary text-sm font-bold transition-colors hover:bg-accent"
-              >
-                פרופיל, תוכנית וצ׳אט
-              </Link>
+              <div className="mt-1.5 flex gap-1.5">
+                <Link
+                  href={`/coach/trainees/${trainee.id}`}
+                  className="flex h-10 flex-1 cursor-pointer items-center justify-center rounded-xl bg-secondary text-sm font-bold transition-all hover:bg-accent active:scale-95"
+                >
+                  פרופיל, תוכנית וצ׳אט
+                </Link>
+                <TraineeActionsMenu traineeId={trainee.id} traineeName={trainee.full_name || trainee.email} />
+              </div>
             </li>
           ))}
         </ul>
