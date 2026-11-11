@@ -1,7 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
-import { ImageIcon, Loader2Icon, MessageSquareTextIcon, MicIcon } from 'lucide-react'
+import { ImageIcon, Loader2Icon, MessageSquareTextIcon, MicIcon, MonitorIcon } from 'lucide-react'
 import { formatDateTime, type FeedbackItem } from '@/lib/calisthenics'
 import { signedUrl } from '@/lib/signed-url'
 
@@ -18,6 +18,9 @@ function Media({ item }: { item: FeedbackItem }) {
     )
   }
   if (item.kind === 'voice') return <audio controls preload="none" src={url} className="h-10 w-full" />
+  if (item.kind === 'video') {
+    return <video controls playsInline preload="metadata" src={url} className="max-h-60 w-full rounded-lg bg-black object-contain" />
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={url} alt="תמונת משוב שנשלחה" className="max-h-60 w-full rounded-lg object-contain" />
@@ -30,7 +33,7 @@ export function FeedbackThread({ items }: { items: FeedbackItem[] }) {
   if (sorted.length === 0) {
     return (
       <p className="rounded-xl border border-dashed p-4 text-center text-sm text-muted-foreground">
-        עוד לא נשלח משוב לסרטון הזה.
+        עוד לא נשלח משוב לאימון הזה.
       </p>
     )
   }
@@ -38,13 +41,26 @@ export function FeedbackThread({ items }: { items: FeedbackItem[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {sorted.map((item) => {
-        const Icon = item.kind === 'voice' ? MicIcon : item.kind === 'image' ? ImageIcon : MessageSquareTextIcon
+        const Icon =
+          item.kind === 'voice'
+            ? MicIcon
+            : item.kind === 'image'
+              ? ImageIcon
+              : item.kind === 'video'
+                ? MonitorIcon
+                : MessageSquareTextIcon
         return (
           <li key={item.id} className="flex flex-col gap-2 rounded-xl border bg-secondary/40 p-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5 font-semibold text-primary">
                 <Icon className="size-3.5" aria-hidden="true" />
-                {item.kind === 'voice' ? 'הקלטה' : item.kind === 'image' ? 'תמונה' : 'טקסט'}
+                {item.kind === 'voice'
+                  ? 'הקלטה'
+                  : item.kind === 'image'
+                    ? 'תמונה'
+                    : item.kind === 'video'
+                      ? 'הקלטת מסך'
+                      : 'טקסט'}
               </span>
               <time dateTime={item.created_at}>{formatDateTime(item.created_at)}</time>
             </div>

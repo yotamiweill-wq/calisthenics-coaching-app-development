@@ -7,6 +7,7 @@ import {
   Loader2Icon,
   MessageSquareTextIcon,
   MicIcon,
+  MonitorIcon,
   RotateCcwIcon,
   SendIcon,
   SquareIcon,
@@ -15,13 +16,15 @@ import { sendFeedback } from '@/lib/send-feedback'
 import { FEEDBACK_PRESETS } from '@/lib/calisthenics'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { ScreenRecorder, type ScreenRecording } from '@/components/coach/screen-recorder'
 import { cn } from '@/lib/utils'
 
-type Mode = 'text' | 'voice' | 'image'
+type Mode = 'text' | 'voice' | 'screen' | 'image'
 
 const MODES: { value: Mode; label: string; icon: typeof MicIcon }[] = [
   { value: 'text', label: 'טקסט', icon: MessageSquareTextIcon },
   { value: 'voice', label: 'הקלטה', icon: MicIcon },
+  { value: 'screen', label: 'מסך', icon: MonitorIcon },
   { value: 'image', label: 'תמונה', icon: ImageIcon },
 ]
 
@@ -40,10 +43,9 @@ function extensionFor(mime: string) {
 }
 
 interface ComposerProps {
-  submissionId: string
+  submissionIds: string[]
   traineeId: string
   coachId: string
-  alreadyReviewed: boolean
   onSent: () => void
 }
 
@@ -164,7 +166,7 @@ function VoiceRecorder({ onSubmit, busy }: { onSubmit: (blob: Blob, mime: string
   )
 }
 
-export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyReviewed, onSent }: ComposerProps) {
+export function FeedbackComposer({ submissionIds, traineeId, coachId, onSent }: ComposerProps) {
   const imageInput = useRef<HTMLInputElement>(null)
   const [mode, setMode] = useState<Mode>('text')
   const [text, setText] = useState('')
@@ -186,12 +188,12 @@ export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyRevi
       toast.error(failure)
       return false
     }
-    toast.success('המשוב נשלח למתאמן.')
+    toast.success(submissionIds.length > 1 ? 'המשוב נשלח עבור כל האימון.' : 'המשוב נשלח למתאמן.')
     onSent()
     return true
   }
 
-  const base = { submissionId, traineeId, coachId, alreadyReviewed }
+  const base = { submissionIds, traineeId, coachId }
 
   async function sendText(event: React.FormEvent) {
     event.preventDefault()
@@ -204,6 +206,15 @@ export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyRevi
       ...base,
       kind: 'voice',
       media: { blob, contentType: mime, extension: extensionFor(mime) },
+    })
+  }
+
+  async function sendScreen(recording: ScreenRecording) {
+    await submit({
+      ...base,
+      kind: 'video',
+      body: recording.caption,
+      media: { blob: recording.blob, contentType: recording.contentType, extension: recording.extension },
     })
   }
 
@@ -237,7 +248,7 @@ export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyRevi
 
   return (
     <section aria-label="כתיבת משוב" className="flex flex-col gap-3 rounded-xl border bg-card p-3">
-      <div role="tablist" aria-label="סוג משוב" className="grid grid-cols-3 gap-1 rounded-xl bg-secondary p-1">
+      <div role="tablist" aria-label="סוג משוב" className="grid grid-cols-4 gap-1 rounded-xl bg-secondary p-1">
         {MODES.map((item) => (
           <button
             key={item.value}
@@ -246,7 +257,7 @@ export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyRevi
             aria-selected={mode === item.value}
             onClick={() => setMode(item.value)}
             className={cn(
-              'flex h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-colors',
+              'flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-all active:scale-95',
               mode === item.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >
@@ -308,6 +319,8 @@ export function FeedbackComposer({ submissionId, traineeId, coachId, alreadyRevi
       )}
 
       {mode === 'voice' && <VoiceRecorder onSubmit={sendVoice} busy={busy} />}
+
+      {mode === 'screen' && <ScreenRecorder onSubmit={sendScreen} busy={busy} />}
 
       {mode === 'image' && (
         <div className="flex flex-col gap-3">

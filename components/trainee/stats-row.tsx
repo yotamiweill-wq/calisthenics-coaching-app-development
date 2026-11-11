@@ -6,7 +6,7 @@ export function StatsRow({ submissions }: { submissions: Submission[] }) {
   const pending = submissions.filter((s) => s.status === 'pending').length
   const feedbackCount = submissions.reduce((sum, s) => sum + s.feedback.length, 0)
   const best = submissions.reduce<Submission | null>(
-    (top, s) => (!top || s.hold_seconds > top.hold_seconds ? s : top),
+    (top, s) => (s.hold_seconds != null && (!top || s.hold_seconds > (top.hold_seconds ?? 0)) ? s : top),
     null,
   )
 

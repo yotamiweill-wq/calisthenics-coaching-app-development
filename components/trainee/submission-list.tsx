@@ -41,8 +41,12 @@ export function SubmissionList({ submissions }: { submissions: Submission[] }) {
                 className="flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-start transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
               >
                 <span className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <span className="text-lg font-black leading-none tabular-nums">{s.hold_seconds}</span>
-                  <span className="text-[10px] font-semibold">שנ׳</span>
+                  <span className="text-lg font-black leading-none tabular-nums">
+                    {s.hold_seconds ?? s.reps ?? '—'}
+                  </span>
+                  <span className="text-[10px] font-semibold">
+                    {s.hold_seconds != null ? 'שנ׳' : s.reps != null ? 'חזרות' : ''}
+                  </span>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="truncate font-bold">

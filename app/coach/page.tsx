@@ -19,7 +19,7 @@ export default async function CoachPage() {
     supabase
       .from('submissions')
       .select(
-        'id, trainee_id, exercise, progression, hold_seconds, note, status, video_path, created_at, reviewed_at, feedback(id, kind, body, media_path, created_at)',
+        'id, trainee_id, exercise, progression, hold_seconds, reps, note, status, video_path, created_at, reviewed_at, feedback(id, kind, body, media_path, batch_id, created_at)',
       )
       .order('created_at', { ascending: false })
       .limit(500),

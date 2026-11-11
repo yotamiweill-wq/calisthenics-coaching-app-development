@@ -29,7 +29,7 @@ export default async function TraineeProfilePage({ params }: { params: Promise<{
   const [{ data: submissions }, { data: workouts }, { data: program }] = await Promise.all([
     supabase
       .from('submissions')
-      .select('id, exercise, progression, hold_seconds, created_at')
+      .select('id, exercise, progression, hold_seconds, reps, created_at')
       .eq('trainee_id', id)
       .order('created_at', { ascending: true }),
     supabase.from('workouts').select('done_on').eq('trainee_id', id),

@@ -78,16 +78,23 @@ export function UploadDialog({
   const [exercise, setExercise] = useState<string | null>(BASICS)
   const [progression, setProgression] = useState<string | null>(null)
   const [seconds, setSeconds] = useState('')
+  const [reps, setReps] = useState('')
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const isBasics = exercise === BASICS
+
+  function selectExercise(value: string) {
+    setExercise(value)
+    if (value === BASICS) setSeconds('')
+  }
 
   function reset() {
     setFile(null)
     setExercise(BASICS)
     setProgression(null)
     setSeconds('')
+    setReps('')
     setNote('')
     setError(null)
   }
@@ -108,13 +115,19 @@ export function UploadDialog({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    const hold = Number.parseInt(seconds, 10)
+    const holdText = isBasics ? '' : seconds.trim()
+    const repsText = reps.trim()
+    const hold = holdText ? Number(holdText) : null
+    const repCount = repsText ? Number(repsText) : null
 
     if (!file) return setError('בחרו סרטון להעלאה.')
     if (!exercise) return setError('בחרו תרגיל.')
     if (!isBasics && !progression) return setError('בחרו רמת התקדמות.')
-    if (!Number.isInteger(hold) || hold < 1 || hold > 600) {
-      return setError('הזינו זמן החזקה בין 1 ל-600 שניות.')
+    if (hold !== null && (!Number.isInteger(hold) || hold < 1 || hold > 600)) {
+      return setError('זמן החזקה חייב להיות בין 1 ל-600 שניות, או שאפשר להשאיר ריק.')
+    }
+    if (repCount !== null && (!Number.isInteger(repCount) || repCount < 1 || repCount > 1000)) {
+      return setError('מספר חזרות חייב להיות בין 1 ל-1000, או שאפשר להשאיר ריק.')
     }
 
     setUploading(true)
@@ -139,6 +152,7 @@ export function UploadDialog({
       exercise,
       progression: isBasics ? 'none' : progression,
       hold_seconds: hold,
+      reps: repCount,
       note: note.trim() || null,
       video_path: path,
     })
@@ -219,7 +233,7 @@ export function UploadDialog({
               )}
             </button>
 
-            <ChoiceGroup label="תרגיל" options={EXERCISES} value={exercise} onChange={setExercise} />
+            <ChoiceGroup label="תרגיל" options={EXERCISES} value={exercise} onChange={selectExercise} />
             {!isBasics && (
               <ChoiceGroup
                 label="רמת התקדמות"
@@ -229,20 +243,39 @@ export function UploadDialog({
               />
             )}
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="hold">זמן החזקה (שניות)</Label>
-              <Input
-                id="hold"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={600}
-                dir="ltr"
-                value={seconds}
-                onChange={(e) => setSeconds(e.target.value)}
-                className="h-12 text-start text-base"
-                placeholder="10"
-              />
+            <div className={cn('grid gap-3', !isBasics && 'sm:grid-cols-2')}>
+              {!isBasics && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="hold">זמן החזקה (שניות, לא חובה)</Label>
+                  <Input
+                    id="hold"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={600}
+                    dir="ltr"
+                    value={seconds}
+                    onChange={(e) => setSeconds(e.target.value)}
+                    className="h-12 text-start text-base"
+                    placeholder="10"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="reps">חזרות (לא חובה)</Label>
+                <Input
+                  id="reps"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={1000}
+                  dir="ltr"
+                  value={reps}
+                  onChange={(e) => setReps(e.target.value)}
+                  className="h-12 text-start text-base"
+                  placeholder="8"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">

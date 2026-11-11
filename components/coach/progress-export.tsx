@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { FlameIcon, PrinterIcon, TrophyIcon, VideoIcon } from 'lucide-react'
-import { exerciseLabel, formatShortDate, progressionLabel } from '@/lib/calisthenics'
+import { effortLabel, exerciseLabel, formatShortDate, progressionLabel } from '@/lib/calisthenics'
 import { computeStreaks, dateInIsrael, formatMonth, monthKey, todayInIsrael } from '@/lib/progress'
 import { BrandMark } from '@/components/brand-mark'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,8 @@ interface Entry {
   id: string
   exercise: string
   progression: string
-  hold_seconds: number
+  hold_seconds: number | null
+  reps: number | null
   created_at: string
 }
 
@@ -36,10 +37,12 @@ export function ProgressExport({
   const summary = useMemo(() => {
     const inMonth = submissions.filter((s) => monthKey(dateInIsrael(s.created_at)) === month)
     const before = submissions.filter((s) => monthKey(dateInIsrael(s.created_at)) < month)
-    const exercises = [...new Set(inMonth.map((s) => s.exercise))]
+    const holds = (list: Entry[], exercise: string) =>
+      list.flatMap((s) => (s.exercise === exercise && s.hold_seconds != null ? [s.hold_seconds] : []))
+    const exercises = [...new Set(inMonth.filter((s) => s.hold_seconds != null).map((s) => s.exercise))]
     const gains = exercises.map((exercise) => {
-      const best = Math.max(...inMonth.filter((s) => s.exercise === exercise).map((s) => s.hold_seconds))
-      const previous = Math.max(0, ...before.filter((s) => s.exercise === exercise).map((s) => s.hold_seconds))
+      const best = Math.max(...holds(inMonth, exercise))
+      const previous = Math.max(0, ...holds(before, exercise))
       return { exercise, best, previous, gain: best - previous }
     })
     const monthDays = workoutDays.filter((d) => monthKey(d) === month)
@@ -142,7 +145,7 @@ export function ProgressExport({
                     )}
                   </span>
                   <span className="flex items-center gap-3 tabular-nums">
-                    <span className="font-bold">{s.hold_seconds} שנ׳</span>
+                    <span className="font-bold">{effortLabel(s)}</span>
                     <span className="text-xs text-muted-foreground">{formatShortDate(s.created_at)}</span>
                   </span>
                 </li>

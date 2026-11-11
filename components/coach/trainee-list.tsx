@@ -1,5 +1,6 @@
 'use client'
 
+import { groupWorkoutDays } from '@/lib/workout-days'
 import { useState } from 'react'
 import Link from 'next/link'
 import { SearchIcon, UsersIcon } from 'lucide-react'
@@ -26,11 +27,11 @@ export function TraineeList({
     .map((t) => {
       const own = submissions.filter((s) => s.trainee_id === t.id)
       const best = own.reduce<CoachSubmission | null>(
-        (top, s) => (!top || s.hold_seconds > top.hold_seconds ? s : top),
+        (top, s) => (s.hold_seconds != null && (!top || s.hold_seconds > (top.hold_seconds ?? 0)) ? s : top),
         null,
       )
       const last = own.reduce<string | null>((latest, s) => (!latest || s.created_at > latest ? s.created_at : latest), null)
-      return { trainee: t, total: own.length, pending: own.filter((s) => s.status === 'pending').length, best, last }
+      return { trainee: t, total: own.length, pending: groupWorkoutDays(own).filter((d) => d.status === 'pending').length, best, last }
     })
     .sort((a, b) => b.pending - a.pending || a.trainee.full_name.localeCompare(b.trainee.full_name, 'he'))
 
@@ -86,7 +87,7 @@ export function TraineeList({
                   {trainee.disabled_at ? (
                     <Badge variant="destructive">מושבת</Badge>
                   ) : (
-                    pending > 0 && <Badge>{pending} ממתינים</Badge>
+                    pending > 0 && <Badge>{pending} אימונים ממתינים</Badge>
                   )}
                 </span>
                 <span className="grid grid-cols-3 gap-2 text-center">

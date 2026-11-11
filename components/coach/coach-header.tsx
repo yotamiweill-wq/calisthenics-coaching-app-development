@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/notifications/notification-bell'
 
 const NAV: NavItem[] = [
   { href: '/coach', label: 'תור בדיקה', exact: true },
+  { href: '/coach/chat', label: 'צ׳אט' },
   { href: '/coach/invites', label: 'הזמנות' },
   { href: '/coach/tutorials', label: 'הדרכות' },
   { href: '/coach/announcements', label: 'עדכונים' },

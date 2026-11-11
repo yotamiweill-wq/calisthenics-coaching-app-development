@@ -13,7 +13,7 @@ const chartConfig = {
 interface Entry {
   exercise: string
   progression: string
-  hold_seconds: number
+  hold_seconds: number | null
   created_at: string
 }
 

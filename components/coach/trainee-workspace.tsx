@@ -16,7 +16,8 @@ interface Entry {
   id: string
   exercise: string
   progression: string
-  hold_seconds: number
+  hold_seconds: number | null
+  reps: number | null
   created_at: string
 }
 
