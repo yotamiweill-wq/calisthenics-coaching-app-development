@@ -72,7 +72,7 @@ export function SubmissionList({ submissions }: { submissions: Submission[] }) {
         </ul>
       )}
 
-      <SubmissionDetailDialog submission={active} onClose={() => setOpenId(null)} />
+      <SubmissionDetailDialog submission={active} allSubmissions={submissions} onClose={() => setOpenId(null)} />
     </section>
   )
 }
