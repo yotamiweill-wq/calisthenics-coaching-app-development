@@ -55,13 +55,14 @@ export function formatDateTime(iso: string) {
   return dateTimeFormatter.format(new Date(iso))
 }
 
-export type FeedbackKind = 'text' | 'voice' | 'image'
+export type FeedbackKind = 'text' | 'voice' | 'image' | 'video'
 
 export interface FeedbackItem {
   id: string
   kind: FeedbackKind
   body: string | null
   media_path: string | null
+  batch_id: string | null
   created_at: string
 }
 
@@ -69,13 +70,21 @@ export interface Submission {
   id: string
   exercise: Exercise
   progression: Progression
-  hold_seconds: number
+  hold_seconds: number | null
+  reps: number | null
   note: string | null
   status: 'pending' | 'reviewed'
   video_path: string
   created_at: string
   reviewed_at: string | null
   feedback: FeedbackItem[]
+}
+
+export function effortLabel(entry: { hold_seconds: number | null; reps: number | null }) {
+  const parts: string[] = []
+  if (entry.reps != null) parts.push(`${entry.reps} חזרות`)
+  if (entry.hold_seconds != null) parts.push(`${entry.hold_seconds} שניות`)
+  return parts.length > 0 ? parts.join(' · ') : 'ללא נתוני מאמץ'
 }
 
 export interface CoachSubmission extends Submission {

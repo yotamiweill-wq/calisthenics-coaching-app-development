@@ -1,9 +1,10 @@
 'use client'
 
 import useSWR from 'swr'
-import { Loader2Icon, MicIcon, MessageSquareTextIcon, ImageIcon } from 'lucide-react'
+import { Loader2Icon, MicIcon, MessageSquareTextIcon, ImageIcon, MonitorIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
+  effortLabel,
   exerciseEnglish,
   exerciseLabel,
   formatDateTime,
@@ -43,6 +44,11 @@ function FeedbackMedia({ item }: { item: FeedbackItem }) {
   if (item.kind === 'voice') {
     return <audio controls preload="none" src={url} className="h-10 w-full" />
   }
+  if (item.kind === 'video') {
+    return (
+      <video controls playsInline preload="metadata" src={url} className="max-h-72 w-full rounded-lg bg-black object-contain" />
+    )
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={url} alt="תמונת משוב מהמאמן" className="max-h-72 w-full rounded-lg object-contain" />
@@ -50,7 +56,14 @@ function FeedbackMedia({ item }: { item: FeedbackItem }) {
 }
 
 function FeedbackEntry({ item }: { item: FeedbackItem }) {
-  const Icon = item.kind === 'voice' ? MicIcon : item.kind === 'image' ? ImageIcon : MessageSquareTextIcon
+  const Icon =
+    item.kind === 'voice'
+      ? MicIcon
+      : item.kind === 'image'
+        ? ImageIcon
+        : item.kind === 'video'
+          ? MonitorIcon
+          : MessageSquareTextIcon
   return (
     <li className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -96,7 +109,7 @@ export function SubmissionDetailDialog({
                 </span>
               </DialogTitle>
               <DialogDescription>
-                {progressionLabel(submission.progression)} · {submission.hold_seconds} שניות ·{' '}
+                {progressionLabel(submission.progression)} · {effortLabel(submission)} ·{' '}
                 {formatDateTime(submission.created_at)}
               </DialogDescription>
             </DialogHeader>

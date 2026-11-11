@@ -3,7 +3,7 @@ import { EXERCISES, type Folder } from '@/lib/calisthenics'
 interface HoldEntry {
   exercise: string
   progression: string
-  hold_seconds: number
+  hold_seconds: number | null
   created_at: string
 }
 
@@ -52,7 +52,10 @@ export interface PersonalRecord {
 export function personalRecords(entries: HoldEntry[]): PersonalRecord[] {
   return EXERCISES.map((exercise) => {
     const own = entries
-      .filter((e) => e.exercise === exercise.value)
+      .filter(
+        (e): e is HoldEntry & { hold_seconds: number } =>
+          e.exercise === exercise.value && e.hold_seconds != null,
+      )
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
     if (own.length === 0) return null
     const top = own.reduce((best, e) => (e.hold_seconds >= best.hold_seconds ? e : best), own[0])

@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { ClockIcon, MessageSquareTextIcon, UsersIcon, VideoIcon } from 'lucide-react'
 import type { CoachSubmission, Profile } from '@/lib/calisthenics'
+import { groupWorkoutDays, dedupeFeedback } from '@/lib/workout-days'
 import { ReviewQueue, type QueueFilter } from '@/components/coach/review-queue'
 import { TraineeList } from '@/components/coach/trainee-list'
 import { ReviewDialog } from '@/components/coach/review-dialog'
@@ -27,14 +28,15 @@ export function CoachDashboard({
   const [openId, setOpenId] = useState<string | null>(null)
 
   const names = useMemo(() => new Map(trainees.map((t) => [t.id, t.full_name || t.email])), [trainees])
-  const active = submissions.find((s) => s.id === openId) ?? null
+  const days = useMemo(() => groupWorkoutDays(submissions), [submissions])
+  const active = days.find((d) => d.key === openId) ?? null
 
-  const pending = submissions.filter((s) => s.status === 'pending').length
-  const feedbackCount = submissions.reduce((sum, s) => sum + s.feedback.length, 0)
+  const pending = days.filter((d) => d.status === 'pending').length
+  const feedbackCount = dedupeFeedback(submissions.flatMap((s) => s.feedback)).length
   const activeTrainees = trainees.filter((t) => !t.disabled_at).length
 
   const stats = [
-    { label: 'ממתינים לבדיקה', value: pending, icon: ClockIcon, highlight: true },
+    { label: 'אימונים לבדיקה', value: pending, icon: ClockIcon, highlight: true },
     { label: 'מתאמנים פעילים', value: activeTrainees, icon: UsersIcon },
     { label: 'סרטונים בסך הכול', value: submissions.length, icon: VideoIcon },
     { label: 'משובים שנשלחו', value: feedbackCount, icon: MessageSquareTextIcon },
@@ -93,7 +95,7 @@ export function CoachDashboard({
 
       {visibleTab === 'queue' ? (
         <ReviewQueue
-          submissions={submissions}
+          days={days}
           names={names}
           filter={filter}
           onFilterChange={setFilter}
@@ -106,8 +108,8 @@ export function CoachDashboard({
       )}
 
       <ReviewDialog
-        submission={active}
-        traineeName={active ? (names.get(active.trainee_id) ?? 'מתאמן') : ''}
+        day={active}
+        traineeName={active ? (names.get(active.traineeId) ?? 'מתאמן') : ''}
         coachId={coachId}
         onClose={() => setOpenId(null)}
       />

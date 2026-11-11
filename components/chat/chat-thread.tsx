@@ -21,6 +21,10 @@ async function loadMessages([, traineeId]: [string, string]) {
   return (data ?? []) as ChatMessage[]
 }
 
+function appendUnique(list: ChatMessage[], message: ChatMessage) {
+  return list.some((m) => m.id === message.id) ? list : [...list, message]
+}
+
 const timeFormat = new Intl.DateTimeFormat('he-IL', {
   day: 'numeric',
   month: 'short',
@@ -52,11 +56,15 @@ export function ChatThread({
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `trainee_id=eq.${traineeId}` },
-        () => {
-          void mutate()
+        (payload) => {
+          const incoming = payload.new as ChatMessage
+          void mutate((current = []) => appendUnique(current, incoming), { revalidate: false })
         },
       )
-      .subscribe()
+      .subscribe((status) => {
+        // Catch up on anything sent while the socket was connecting or reconnecting.
+        if (status === 'SUBSCRIBED') void mutate()
+      })
     return () => {
       void supabase.removeChannel(channel)
     }
@@ -70,16 +78,18 @@ export function ChatThread({
     const body = text.trim()
     if (!body || busy) return
     setBusy(true)
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from('messages')
       .insert({ trainee_id: traineeId, sender_id: currentUserId, body })
+      .select('id, trainee_id, sender_id, body, created_at')
+      .single()
     setBusy(false)
-    if (error) {
+    if (error || !data) {
       toast.error('שליחת ההודעה נכשלה.')
       return
     }
     setText('')
-    void mutate()
+    void mutate((current = []) => appendUnique(current, data as ChatMessage), { revalidate: false })
   }
 
   return (

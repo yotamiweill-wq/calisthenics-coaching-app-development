@@ -33,7 +33,7 @@ export function ProgressChart({ submissions }: { submissions: Submission[] }) {
   const data = useMemo(
     () =>
       submissions
-        .filter((s) => s.exercise === exercise)
+        .filter((s): s is typeof s & { hold_seconds: number } => s.exercise === exercise && s.hold_seconds != null)
         .sort((a, b) => a.created_at.localeCompare(b.created_at))
         .map((s) => ({
           id: s.id,
