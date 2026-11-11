@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import type { Program } from '@/lib/calisthenics'
 import { PrCards } from '@/components/trainee/pr-cards'
 import { ActivityCalendar } from '@/components/trainee/workout-checkin'
@@ -40,6 +40,7 @@ export function TraineeWorkspace({
   program: Program | null
 }) {
   const [tab, setTab] = useState<Tab>('overview')
+  const visibleTab = useDeferredValue(tab)
   const today = todayInIsrael()
   const streaks = computeStreaks(workoutDays, today)
   const name = trainee.full_name || 'מתאמן'
@@ -55,7 +56,7 @@ export function TraineeWorkspace({
             aria-selected={tab === item.value}
             onClick={() => setTab(item.value)}
             className={cn(
-              'h-10 rounded-lg text-sm font-bold transition-colors',
+              'h-10 cursor-pointer rounded-lg text-sm font-bold transition-all active:scale-95',
               tab === item.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >
@@ -64,7 +65,7 @@ export function TraineeWorkspace({
         ))}
       </div>
 
-      {tab === 'overview' && (
+      {visibleTab === 'overview' && (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6 print:hidden">
             <PrCards entries={submissions} />
@@ -83,9 +84,9 @@ export function TraineeWorkspace({
         </div>
       )}
 
-      {tab === 'program' && <ProgramEditor traineeId={trainee.id} coachId={coachId} program={program} />}
+      {visibleTab === 'program' && <ProgramEditor traineeId={trainee.id} coachId={coachId} program={program} />}
 
-      {tab === 'chat' && <ChatThread traineeId={trainee.id} currentUserId={coachId} otherName={name} />}
+      {visibleTab === 'chat' && <ChatThread traineeId={trainee.id} currentUserId={coachId} otherName={name} />}
     </div>
   )
 }

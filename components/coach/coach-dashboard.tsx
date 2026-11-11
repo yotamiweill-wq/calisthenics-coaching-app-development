@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { ClockIcon, MessageSquareTextIcon, UsersIcon, VideoIcon } from 'lucide-react'
 import type { CoachSubmission, Profile } from '@/lib/calisthenics'
 import { ReviewQueue, type QueueFilter } from '@/components/coach/review-queue'
@@ -20,6 +20,8 @@ export function CoachDashboard({
   submissions: CoachSubmission[]
 }) {
   const [tab, setTab] = useState<Tab>('queue')
+  // The tab highlight updates immediately; the heavy list renders at lower priority so clicks never block.
+  const visibleTab = useDeferredValue(tab)
   const [filter, setFilter] = useState<QueueFilter>('pending')
   const [traineeFilter, setTraineeFilter] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -80,7 +82,7 @@ export function CoachDashboard({
             aria-selected={tab === item.value}
             onClick={() => setTab(item.value)}
             className={cn(
-              'h-10 rounded-lg text-sm font-bold transition-colors',
+              'h-10 cursor-pointer rounded-lg text-sm font-bold transition-all active:scale-95',
               tab === item.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >
@@ -89,7 +91,7 @@ export function CoachDashboard({
         ))}
       </div>
 
-      {tab === 'queue' ? (
+      {visibleTab === 'queue' ? (
         <ReviewQueue
           submissions={submissions}
           names={names}

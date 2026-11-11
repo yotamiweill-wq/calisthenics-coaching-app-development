@@ -105,4 +105,19 @@
   html {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Instant press feedback for every native clickable element not already styled by a component */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  summary {
+    @apply cursor-pointer transition-all active:scale-95;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:active,
+    [role='button']:active,
+    [role='tab']:active,
+    a:active {
+      scale: 1 !important;
+    }
+  }
 }
