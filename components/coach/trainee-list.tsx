@@ -66,11 +66,11 @@ export function TraineeList({
       ) : (
         <ul className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           {rows.map(({ trainee, total, pending, best, last }) => (
-            <li key={trainee.id}>
+            <li key={trainee.id} className="flex flex-col rounded-2xl border bg-card">
               <button
                 type="button"
                 onClick={() => onSelect(trainee.id)}
-                className="flex h-full w-full flex-col gap-3 rounded-2xl border bg-card p-4 text-start transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                className="flex w-full flex-1 cursor-pointer flex-col gap-3 rounded-t-2xl p-4 text-start transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
               >
                 <span className="flex items-center gap-3">
                   <span
@@ -108,7 +108,7 @@ export function TraineeList({
                   </span>
                 </span>
               </button>
-              <div className="mt-1.5 flex gap-1.5">
+              <div className="flex gap-1.5 p-2 pt-0">
                 <Link
                   href={`/coach/trainees/${trainee.id}`}
                   className="flex h-10 flex-1 cursor-pointer items-center justify-center rounded-xl bg-secondary text-sm font-bold transition-all hover:bg-accent active:scale-95"
