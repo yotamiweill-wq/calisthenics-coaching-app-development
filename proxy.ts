@@ -2,6 +2,7 @@ import { updateSession } from '@/lib/supabase/proxy'
 import { type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === '/api/cron/submission-uploads') return
   return await updateSession(request)
 }
 
