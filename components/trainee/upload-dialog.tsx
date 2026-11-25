@@ -4,7 +4,8 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { FilmIcon, Loader2Icon, PlusIcon, UploadCloudIcon } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { saveSubmission } from '@/app/dashboard/submission-actions'
+import { SIZE_ERROR, submissionError, uploadSubmissionVideo } from '@/lib/upload-submission-video'
 import { BASICS, EXERCISES, PROGRESSIONS } from '@/lib/calisthenics'
 import { Button } from '@/components/ui/button'
 import {
@@ -73,6 +74,7 @@ export function UploadDialog({
 }) {
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
+  const uploadedPath = useRef<string | null>(null)
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [exercise, setExercise] = useState<string | null>(BASICS)
@@ -82,6 +84,7 @@ export function UploadDialog({
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState<number | null>(null)
   const isBasics = exercise === BASICS
 
   function selectExercise(value: string) {
@@ -90,6 +93,7 @@ export function UploadDialog({
   }
 
   function reset() {
+    uploadedPath.current = null
     setFile(null)
     setExercise(BASICS)
     setProgression(null)
@@ -100,13 +104,12 @@ export function UploadDialog({
   }
 
   function handleFile(selected: File | undefined) {
-    if (!selected) return
-    if (!selected.type.startsWith('video/')) {
-      setError('אפשר להעלות רק קבצי וידאו.')
-      return
-    }
-    if (selected.size > MAX_BYTES) {
-      setError(`הקובץ גדול מדי (${formatSize(selected.size)}). המקסימום הוא 50 MB.`)
+    if (uploading || !selected) return
+    uploadedPath.current = null
+    if (!selected.type.startsWith('video/') || selected.size > MAX_BYTES) {
+      setFile(null)
+      if (fileInput.current) fileInput.current.value = ''
+      setError(selected.size > MAX_BYTES ? SIZE_ERROR : 'אפשר להעלות רק קבצי וידאו.')
       return
     }
     setError(null)
@@ -133,42 +136,32 @@ export function UploadDialog({
     setUploading(true)
     setError(null)
 
-    const supabase = createClient()
-    const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4'
-    const path = `${userId}/${crypto.randomUUID()}.${extension}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('submissions')
-      .upload(path, file, { contentType: file.type, upsert: false })
-
-    if (uploadError) {
-      setError('ההעלאה נכשלה. בדקו את החיבור ונסו שוב.')
+    setProgress(null)
+    let stage = 'שגיאה בהעלאת הסרטון'
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || 'mp4'
+      const path = uploadedPath.current ?? `${userId}/uploads/${crypto.randomUUID()}.${extension}`
+      if (!uploadedPath.current) {
+        await uploadSubmissionVideo(file, path, setProgress)
+        uploadedPath.current = path
+      }
+      stage = 'שגיאה בשמירת פרטי הסרטון'
+      setProgress(100)
+      const {error} = await saveSubmission({path, exercise, progression: isBasics ? 'none' : progression!, hold, reps: repCount, note})
+      if (error) {
+        if (error.code === 'P0002') uploadedPath.current = null
+        throw error
+      }
+      toast.success('הסרטון הועלה! המאמן יקבל אותו לבדיקה.')
+      setOpen(false)
+      reset()
+      router.refresh()
+    } catch (cause) {
+      console.error(stage, cause)
+      setError(submissionError(cause, stage))
+    } finally {
       setUploading(false)
-      return
     }
-
-    const { error: insertError } = await supabase.from('submissions').insert({
-      trainee_id: userId,
-      exercise,
-      progression: isBasics ? 'none' : progression,
-      hold_seconds: hold,
-      reps: repCount,
-      note: note.trim() || null,
-      video_path: path,
-    })
-
-    if (insertError) {
-      await supabase.storage.from('submissions').remove([path])
-      setError('לא הצלחנו לשמור את הסרטון. נסו שוב.')
-      setUploading(false)
-      return
-    }
-
-    toast.success('הסרטון הועלה! המאמן יקבל אותו לבדיקה.')
-    setUploading(false)
-    setOpen(false)
-    reset()
-    router.refresh()
   }
 
   return (
@@ -211,6 +204,7 @@ export function UploadDialog({
             />
             <button
               type="button"
+              disabled={uploading}
               onClick={() => fileInput.current?.click()}
               className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-secondary/40 p-4 text-center transition-colors hover:bg-secondary"
             >
@@ -296,9 +290,9 @@ export function UploadDialog({
               </p>
             )}
 
-            <Button type="submit" disabled={uploading} className="h-12 text-base font-bold">
+            <Button type="submit" disabled={!file || uploading} className="h-12 text-base font-bold">
               {uploading ? <Loader2Icon className="animate-spin" /> : <UploadCloudIcon />}
-              {uploading ? 'מעלה…' : 'שליחה למאמן'}
+              <span role="status">{uploading ? `מעלה סרטון… אנא המתינו${progress === null ? '' : ` · ${progress}%`}` : 'שליחה למאמן'}</span>
             </Button>
           </form>
         </DialogContent>
